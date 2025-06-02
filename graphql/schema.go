@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"mas-diq/go-graphql/config"
 	"mas-diq/go-graphql/models"
 
 	"github.com/graphql-go/graphql"
@@ -13,18 +14,13 @@ var userType = graphql.NewObject(graphql.ObjectConfig{
 		"id":    &graphql.Field{Type: graphql.Int},
 		"name":  &graphql.Field{Type: graphql.String},
 		"email": &graphql.Field{Type: graphql.String},
-		"createdAt": &graphql.Field{
-			Type: graphql.String,
+		"posts": &graphql.Field{
+			Type: graphql.NewList(postType),
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				post := p.Source.(models.Post)
-				return post.CreatedAt.Format("2006-01-02 15:04:05"), nil
-			},
-		},
-		"updatedAt": &graphql.Field{
-			Type: graphql.String,
-			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				post := p.Source.(models.Post)
-				return post.UpdatedAt.Format("2006-01-02 15:04:05"), nil
+				user := p.Source.(models.User)
+				var posts []models.Post
+				config.DB.Where("created_by = ?", user.ID).Find(&posts)
+				return posts, nil
 			},
 		},
 	},
@@ -39,18 +35,20 @@ var postType = graphql.NewObject(graphql.ObjectConfig{
 		"image":    &graphql.Field{Type: graphql.String},
 		"content":  &graphql.Field{Type: graphql.String},
 		"status":   &graphql.Field{Type: graphql.String},
+		"createdBy": &graphql.Field{
+			Type: userType,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				post := p.Source.(models.Post)
+				var user models.User
+				config.DB.First(&user, post.CreatedBy)
+				return user, nil
+			},
+		},
 		"createdAt": &graphql.Field{
 			Type: graphql.String,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				post := p.Source.(models.Post)
 				return post.CreatedAt.Format("2006-01-02 15:04:05"), nil
-			},
-		},
-		"updatedAt": &graphql.Field{
-			Type: graphql.String,
-			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				post := p.Source.(models.Post)
-				return post.UpdatedAt.Format("2006-01-02 15:04:05"), nil
 			},
 		},
 	},
@@ -63,17 +61,17 @@ func NewSchema(db *gorm.DB) (graphql.Schema, error) {
 			"user": &graphql.Field{
 				Type: userType,
 				Args: graphql.FieldConfigArgument{
-					"id": &graphql.ArgumentConfig{Type: graphql.Int},
+					"id": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.Int)},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					id, _ := p.Args["id"].(int)
+					id := p.Args["id"].(int)
 					var user models.User
-					db.First(&user, id)
+					if err := db.First(&user, id).Error; err != nil {
+						return nil, err
+					}
 					return user, nil
 				},
 			},
-
-			// Post queries
 			"post": &graphql.Field{
 				Type: postType,
 				Args: graphql.FieldConfigArgument{
@@ -82,7 +80,7 @@ func NewSchema(db *gorm.DB) (graphql.Schema, error) {
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					id := p.Args["id"].(int)
 					var post models.Post
-					if err := db.First(&post, id).Error; err != nil {
+					if err := db.Preload("User").First(&post, id).Error; err != nil {
 						return nil, err
 					}
 					return post, nil
@@ -93,13 +91,18 @@ func NewSchema(db *gorm.DB) (graphql.Schema, error) {
 				Args: graphql.FieldConfigArgument{
 					"status": &graphql.ArgumentConfig{Type: graphql.String},
 					"limit":  &graphql.ArgumentConfig{Type: graphql.Int},
+					"userId": &graphql.ArgumentConfig{Type: graphql.Int},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					var posts []models.Post
-					query := db.Model(&models.Post{})
+					query := db.Preload("User")
 
 					if status, ok := p.Args["status"].(string); ok {
 						query = query.Where("status = ?", status)
+					}
+
+					if userId, ok := p.Args["userId"].(int); ok {
+						query = query.Where("created_by = ?", userId)
 					}
 
 					if limit, ok := p.Args["limit"].(int); ok {

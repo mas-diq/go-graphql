@@ -13,8 +13,10 @@ type User struct {
 	Posts []Post `json:"posts" gorm:"foreignKey:CreatedBy"`
 }
 
+const userTable = "users"
+
 func (u *User) TableName() string {
-	return "users"
+	return userTable
 }
 
 func CreateUserData(m *User) (err error) {
@@ -32,7 +34,7 @@ func UpdateUserData(m *User) (err error) {
 }
 
 func GetListUser(m *[]User, filter User) (err error) {
-	query := config.DB.Table("users")
+	query := config.DB.Table(userTable)
 
 	if filter.ID != 0 {
 		query = query.Where("id = ?", filter.ID)
@@ -52,13 +54,13 @@ func GetListUser(m *[]User, filter User) (err error) {
 
 func GetOneUser(m *User, id uint64) (err error) {
 	query := config.DB.
-		Table("users").
+		Table(userTable).
 		Where("id = ?", id).
 		First(m)
 	return query.Error
 }
 
 func DeleteUser(m *User) (err error) {
-	query := config.DB.Table("users").Delete(m)
+	query := config.DB.Table(userTable).Delete(m)
 	return query.Error
 }

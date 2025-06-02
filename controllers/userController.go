@@ -121,10 +121,6 @@ func DeleteUser(c *gin.Context) {
 
 	res.Code = http.StatusOK
 	res.Info = "User deleted successfully"
-	res.Data = dto.UserResponse{
-		ID:    user.ID,
-		Name:  user.Name,
-		Email: user.Email,
-	}
+	res.Data = nil
 	c.JSON(http.StatusOK, res)
 }

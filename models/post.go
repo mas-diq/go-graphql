@@ -1,6 +1,10 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"mas-diq/go-graphql/config"
+
+	"gorm.io/gorm"
+)
 
 type PostStatus string
 
@@ -21,6 +25,54 @@ type Post struct {
 	User      User       `json:"user" gorm:"foreignKey:CreatedBy"` // Relationship
 }
 
+const postTable = "posts"
+
 func (p *Post) TableName() string {
-	return "posts"
+	return postTable
+}
+
+func CreatePostData(m *Post) (err error) {
+	if err = config.DB.Create(m).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdatePostData(m *Post) (err error) {
+	if err = config.DB.Save(m).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetListPost(m *[]Post, filter Post) (err error) {
+	query := config.DB.Table(postTable)
+
+	if filter.ID != 0 {
+		query = query.Where("id = ?", filter.ID)
+	}
+
+	if filter.Title != "" {
+		query = query.Where("title = ?", filter.Title)
+	}
+
+	if filter.Status != "" {
+		query = query.Where("status = ?", filter.Status)
+	}
+
+	query = query.Find(m)
+	return query.Error
+}
+
+func GetOnePost(m *Post, id uint64) (err error) {
+	query := config.DB.
+		Table(postTable).
+		Where("id = ?", id).
+		First(m)
+	return query.Error
+}
+
+func DeletePost(m *Post) (err error) {
+	query := config.DB.Table(postTable).Delete(m)
+	return query.Error
 }
