@@ -11,7 +11,10 @@ func main() {
 	config.ConnectDatabase()
 
 	// Auto migrate
-	config.DB.AutoMigrate(&models.User{})
+	config.DB.AutoMigrate(
+		&models.User{},
+		&models.Post{},
+	)
 
 	// Setup routes
 	r := routes.SetupRouter()

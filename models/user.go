@@ -10,6 +10,7 @@ type User struct {
 	gorm.Model
 	Name  string `json:"name" gorm:"size:100;not null"`
 	Email string `json:"email" gorm:"size:255;unique;not null"`
+	Posts []Post `json:"posts" gorm:"foreignKey:CreatedBy"`
 }
 
 func (u *User) TableName() string {
