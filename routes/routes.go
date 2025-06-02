@@ -13,6 +13,7 @@ func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
 	// REST routes
+	r.GET("/users", controllers.GetListUser)
 	r.POST("/users", controllers.CreateUser)
 	r.GET("/users/:id", controllers.GetUser)
 	r.PUT("/users/:id", controllers.UpdateUser)

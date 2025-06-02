@@ -54,6 +54,23 @@ func GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+func GetListUser(c *gin.Context) {
+	res := schemas.Response{}
+
+	var user []models.User
+	if err := models.GetListUser(&user, models.User{}); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res.Code = http.StatusOK
+	res.Info = "User retrieved successfully"
+	res.Data = gin.H{
+		"users": user,
+	}
+	c.JSON(http.StatusOK, res)
+}
+
 func UpdateUser(c *gin.Context) {
 	res := schemas.Response{}
 	id := c.MustGet("id").(uint64)
