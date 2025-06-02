@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"mas-diq/go-graphql/loaders"
 	"mas-diq/go-graphql/models"
 
 	"github.com/graphql-go/graphql"
@@ -62,12 +63,15 @@ func NewSchema(db *gorm.DB) (graphql.Schema, error) {
 	postType.AddFieldConfig("author", &graphql.Field{
 		Type: userType,
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			// Get loader from context
+			loader := p.Context.Value("userLoader").(*loaders.UserLoader)
+
 			post := p.Source.(models.Post)
-			var user models.User
-			if err := db.First(&user, post.CreatedBy).Error; err != nil {
+			users, err := loader.Load(p.Context, []uint{post.CreatedBy})
+			if err != nil {
 				return nil, err
 			}
-			return user, nil
+			return users[0], nil
 		},
 	})
 

@@ -1,13 +1,20 @@
 package routes
 
 import (
+	"context"
 	"mas-diq/go-graphql/config"
 	"mas-diq/go-graphql/controllers"
 	"mas-diq/go-graphql/graphql"
+	"mas-diq/go-graphql/loaders"
 
 	"github.com/gin-gonic/gin"
 	"github.com/graphql-go/handler"
 )
+
+// Define a custom type for context keys
+type contextKey string
+
+const userLoaderKey contextKey = "userLoader"
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
@@ -37,7 +44,12 @@ func SetupRouter() *gin.Engine {
 		Pretty: true,
 	})
 
+	// In routes/routes.go
 	r.POST("/graphql", func(c *gin.Context) {
+		// Create new loader for each request
+		loader := loaders.NewUserLoader(config.DB)
+		ctx := context.WithValue(c.Request.Context(), userLoaderKey, loader)
+		c.Request = c.Request.WithContext(ctx)
 		h.ServeHTTP(c.Writer, c.Request)
 	})
 
