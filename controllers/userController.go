@@ -3,17 +3,15 @@ package controllers
 import (
 	"mas-diq/go-graphql/dto"
 	"mas-diq/go-graphql/models"
+	"mas-diq/go-graphql/schemas"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-type UserController struct {
-	DB *gorm.DB
-}
+func CreateUser(c *gin.Context) {
+	res := schemas.Response{}
 
-func (uc *UserController) CreateUser(c *gin.Context) {
 	var input dto.CreateUserRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -21,74 +19,95 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 	}
 
 	user := models.User{Name: input.Name, Email: input.Email}
-	if err := uc.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
+	if err := models.CreateUserData(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, dto.UserResponse{
+	res.Code = http.StatusOK
+	res.Info = "User created successfully"
+	res.Data = dto.UserResponse{
 		ID:    user.ID,
 		Name:  user.Name,
 		Email: user.Email,
-	})
+	}
+	c.JSON(http.StatusOK, res)
 }
 
-func (uc *UserController) GetUser(c *gin.Context) {
-	var input dto.CreateUserRequest
+func GetUser(c *gin.Context) {
+	res := schemas.Response{}
+	id := c.MustGet("id").(uint64)
+
+	var user models.User
+	if err := models.GetOneUser(&user, id); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res.Code = http.StatusOK
+	res.Info = "User retrieved successfully"
+	res.Data = dto.UserResponse{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+func UpdateUser(c *gin.Context) {
+	res := schemas.Response{}
+	id := c.MustGet("id").(uint64)
+
+	var input dto.UpdateUserRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	user := models.User{Name: input.Name, Email: input.Email}
-	if err := uc.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, dto.UserResponse{
-		ID:    user.ID,
-		Name:  user.Name,
-		Email: user.Email,
-	})
-}
-
-func (uc *UserController) UpdateUser(c *gin.Context) {
-	var input dto.CreateUserRequest
-	if err := c.ShouldBindJSON(&input); err != nil {
+	var user models.User
+	if err := models.GetOneUser(&user, id); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	user := models.User{Name: input.Name, Email: input.Email}
-	if err := uc.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, dto.UserResponse{
-		ID:    user.ID,
-		Name:  user.Name,
-		Email: user.Email,
-	})
-}
-
-func (uc *UserController) DeleteUser(c *gin.Context) {
-	var input dto.CreateUserRequest
-	if err := c.ShouldBindJSON(&input); err != nil {
+	user.Name = input.Name
+	user.Email = input.Email
+	if err := models.UpdateUserData(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	user := models.User{Name: input.Name, Email: input.Email}
-	if err := uc.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, dto.UserResponse{
+	res.Code = http.StatusOK
+	res.Info = "User updated successfully"
+	res.Data = dto.UserResponse{
 		ID:    user.ID,
 		Name:  user.Name,
 		Email: user.Email,
-	})
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+func DeleteUser(c *gin.Context) {
+	res := schemas.Response{}
+	id := c.MustGet("id").(uint64)
+
+	var user models.User
+	if err := models.GetOneUser(&user, id); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := models.DeleteUser(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res.Code = http.StatusOK
+	res.Info = "User deleted successfully"
+	res.Data = dto.UserResponse{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+	}
+	c.JSON(http.StatusOK, res)
 }
