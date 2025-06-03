@@ -89,7 +89,10 @@ go run main.go
 
 ## GraphQL API
 ### Endpoint
-POST /graphql
+| Method | Endpoint   | Description     |
+|--------|------------|-----------------|
+| POST   | /graphql   | Graphql queries |
+ 
 
 ### Example Queries
 ```graphql
