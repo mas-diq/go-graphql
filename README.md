@@ -39,7 +39,7 @@ This project provides a dual-interface API server with both REST and GraphQL end
 ## Prerequisites
 - Go 1.16+
 - PostgreSQL
-- gqlgen (go install github.com/99designs/gqlgen@latest)
+- gqlgen (go install github.com/graphql-go/graphql@latest)
 
 ## Setup
 
@@ -168,7 +168,7 @@ curl http://localhost:8080/users/1
 Regenerate GraphQL schema (if modified):
 
 ```bash
-go run github.com/99designs/gqlgen generate
+go run github.com/graphql-go/graphql generate
 ```
 
 ## Format code:
