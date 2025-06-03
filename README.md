@@ -45,8 +45,8 @@ This project provides a dual-interface API server with both REST and GraphQL end
 
 ### Clone the repository:
 ```bash
-git clone https://github.com/your-username/your-project.git
-cd your-project
+git clone https://github.com/mas-diq/go-graphql.git
+cd go-graphql
 ```
 
 ### Install dependencies:
